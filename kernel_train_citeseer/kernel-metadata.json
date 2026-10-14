@@ -1,0 +1,15 @@
+{
+  "id": "ask812/pencil-citeseer",
+  "title": "pencil-citeseer",
+  "code_file": "baseline_kernel.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_internet": true,
+  "dataset_sources": [
+    "ask812/pencil-planetoid"
+  ],
+  "competition_sources": [],
+  "kernel_sources": []
+}

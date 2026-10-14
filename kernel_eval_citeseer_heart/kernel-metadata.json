@@ -1,0 +1,17 @@
+{
+  "id": "ask812/pencil-budget-eval-citeseer-heart",
+  "title": "pencil-budget-eval-citeseer-heart",
+  "code_file": "eval_kernel.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_internet": true,
+  "dataset_sources": [
+    "ask812/pencil-planetoid"
+  ],
+  "kernel_sources": [
+    "ask812/pencil-citeseer"
+  ],
+  "competition_sources": []
+}

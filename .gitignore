@@ -1,0 +1,32 @@
+# large / regenerable
+ckpt/
+dl/cora_subset/
+dl/planetoid_subset/
+dl/archive_listing.json
+evals/
+evals_dl/
+klog_*/
+repo/
+__pycache__/
+*.pyc
+
+# private (team roll numbers, course admin, other teams' data)
+team_rolls.json
+SUBMIT.md
+_sheet_analysis.py
+PROPOSAL_long_backup.md
+PROPOSAL_FINAL.docx
+PROPOSAL_FINAL.pdf
+MIDREPORT.pptx
+MIDREPORT.pdf
+
+# office lock files
+~$*
+results/midreport_preview.png
+docs/EXPLAINER.html
+
+# personal explainer (kept locally, not published)
+docs/EXPLAINER.pdf
+docs/explainer/
+explainer_figs.py
+build_explainer.py

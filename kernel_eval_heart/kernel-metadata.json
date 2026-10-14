@@ -1,0 +1,17 @@
+{
+  "id": "ask812/pencil-budget-eval-heart",
+  "title": "pencil-budget-eval-heart",
+  "code_file": "eval_kernel.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_internet": true,
+  "dataset_sources": [
+    "ask812/pencil-cora"
+  ],
+  "kernel_sources": [
+    "ask812/pencil-baseline"
+  ],
+  "competition_sources": []
+}

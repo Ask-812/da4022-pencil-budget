@@ -263,16 +263,19 @@ shape(MSO_SHAPE.RECTANGLE, 7.93, 1.20, 0.012, 5.91, fill=RULE)
 # COLUMN 1 — METHOD, REPRODUCTION, AUDIT, ROADMAP
 # -----------------------------------------------------------------------------
 tf = textbox(LX, 1.15, LW, 0.18).text_frame
-paragraph(tf, [run("01  METHOD + REPRODUCTION", 8.2, True, CRIMSON)], first=True)
+paragraph(tf, [run("WHAT WE ARE DOING", 8.2, True, CRIMSON)], first=True)
 
-shape(MSO_SHAPE.ROUNDED_RECTANGLE, LX, 1.40, LW, 1.31, fill=WHITE, line=RULE, radius=True)
-shape(MSO_SHAPE.RECTANGLE, LX, 1.40, 0.045, 1.31, fill=NAVY)
-tf = textbox(LX + 0.13, 1.50, LW - 0.24, 0.40).text_frame
+shape(MSO_SHAPE.ROUNDED_RECTANGLE, LX, 1.40, LW, 1.65, fill=WHITE, line=RULE, radius=True)
+shape(MSO_SHAPE.RECTANGLE, LX, 1.40, 0.045, 1.65, fill=NAVY)
+tf = textbox(LX + 0.13, 1.50, LW - 0.24, 0.68).text_frame
 paragraph(
     tf,
-    [run("Research question", 7.5, True, CRIMSON), run("  Can a cheap graph heuristic decide where expensive PENCIL inference is worth paying for?", 8.2, True, INK, "Georgia")],
+    [
+        run("We rank every candidate link with Adamic–Adar, run PENCIL only on the top-k candidates, and vary PENCIL's sampled subgraph budget s. ", 7.5, False, SLATE),
+        run("The (k, s) sweep measures how much accuracy remains at each GPU budget. The model is not retrained.", 7.5, True, INK),
+    ],
     first=True,
-    line_spacing=1.02,
+    line_spacing=1.05,
 )
 
 steps = [
@@ -282,16 +285,16 @@ steps = [
 ]
 for i, (num, title, body, bg, accent) in enumerate(steps):
     x = LX + 0.12 + i * 0.94
-    shape(MSO_SHAPE.ROUNDED_RECTANGLE, x, 2.01, 0.82, 0.55, fill=bg, line=RULE, radius=True)
-    tf = textbox(x + 0.05, 2.07, 0.72, 0.16).text_frame
+    shape(MSO_SHAPE.ROUNDED_RECTANGLE, x, 2.32, 0.82, 0.55, fill=bg, line=RULE, radius=True)
+    tf = textbox(x + 0.05, 2.38, 0.72, 0.16).text_frame
     paragraph(tf, [run(f"{num}  {title}", 7.3, True, accent)], first=True, align=PP_ALIGN.CENTER)
-    tf = textbox(x + 0.03, 2.31, 0.76, 0.15).text_frame
+    tf = textbox(x + 0.03, 2.62, 0.76, 0.15).text_frame
     paragraph(tf, [run(body, 5.9, False, SLATE)], first=True, align=PP_ALIGN.CENTER)
     if i < 2:
-        tf = textbox(x + 0.82, 2.17, 0.12, 0.18).text_frame
+        tf = textbox(x + 0.82, 2.48, 0.12, 0.18).text_frame
         paragraph(tf, [run("→", 8.5, True, MUTED)], first=True, align=PP_ALIGN.CENTER)
 
-tf = textbox(LX, 2.86, LW, 0.18).text_frame
+tf = textbox(LX, 3.20, LW, 0.18).text_frame
 paragraph(tf, [run("FREE-GPU REPRODUCTION  ·  PAPER USED 4–8× A100", 7.7, True, CRIMSON)], first=True)
 kpis = [
     ("44.00", "Cora test", "paper 42.23", NAVY),
@@ -300,54 +303,49 @@ kpis = [
 ]
 for i, (value, title, sub, accent) in enumerate(kpis):
     x = LX + i * 1.01
-    shape(MSO_SHAPE.ROUNDED_RECTANGLE, x, 3.10, 0.92, 0.82, fill=WHITE, line=RULE, radius=True)
-    shape(MSO_SHAPE.RECTANGLE, x, 3.10, 0.92, 0.04, fill=accent)
-    tf = textbox(x + 0.06, 3.22, 0.80, 0.25).text_frame
+    shape(MSO_SHAPE.ROUNDED_RECTANGLE, x, 3.44, 0.92, 0.82, fill=WHITE, line=RULE, radius=True)
+    shape(MSO_SHAPE.RECTANGLE, x, 3.44, 0.92, 0.04, fill=accent)
+    tf = textbox(x + 0.06, 3.56, 0.80, 0.25).text_frame
     paragraph(tf, [run(value, 14.5, True, accent, "Georgia")], first=True, align=PP_ALIGN.CENTER)
-    tf = textbox(x + 0.04, 3.49, 0.84, 0.14).text_frame
+    tf = textbox(x + 0.04, 3.83, 0.84, 0.14).text_frame
     paragraph(tf, [run(title, 6.8, True, INK)], first=True, align=PP_ALIGN.CENTER)
-    tf = textbox(x + 0.04, 3.68, 0.84, 0.13).text_frame
+    tf = textbox(x + 0.04, 4.02, 0.84, 0.13).text_frame
     paragraph(tf, [run(sub, 6.2, False, MUTED, "Consolas")], first=True, align=PP_ALIGN.CENTER)
 
-tf = textbox(LX, 4.10, LW, 0.18).text_frame
-paragraph(tf, [run("EXPERIMENTAL AUDIT", 8.2, True, CRIMSON)], first=True)
-shape(MSO_SHAPE.ROUNDED_RECTANGLE, LX, 4.34, LW, 1.30, fill=WHITE, line=RULE, radius=True)
+tf = textbox(LX, 4.45, LW, 0.18).text_frame
+paragraph(tf, [run("EXPERIMENT SETUP", 8.2, True, CRIMSON)], first=True)
+shape(MSO_SHAPE.ROUNDED_RECTANGLE, LX, 4.69, LW, 1.38, fill=WHITE, line=RULE, radius=True)
 audit_rows = [
-    ("4 regimes", "Cora + Citeseer × shared-pool + HeaRT hard negatives"),
-    ("Validation only", "select (k, s) under 5%, 10%, 25%, 50%, 75%, 100% caps"),
-    ("Bias checks", "fixed float32 score collapse and shortlist tie-position bias"),
+    ("Data", "Cora and Citeseer"),
+    ("Tests", "shared negative pool and HeaRT hard negatives"),
+    ("Selection", "choose (k, s) on validation under fixed compute caps"),
+    ("Checks", "corrected score-precision and shortlist tie bias"),
 ]
 for i, (head, body) in enumerate(audit_rows):
-    y = 4.46 + i * 0.38
+    y = 4.79 + i * 0.30
     if i:
-        rule(LX + 0.12, y - 0.07, LW - 0.24, color=RULE, height=0.008)
-    tf = textbox(LX + 0.13, y, 0.82, 0.18).text_frame
+        rule(LX + 0.12, y - 0.045, LW - 0.24, color=RULE, height=0.008)
+    tf = textbox(LX + 0.13, y, 0.66, 0.16).text_frame
     paragraph(tf, [run(head, 7.0, True, NAVY)], first=True)
-    tf = textbox(LX + 0.92, y, 1.94, 0.27).text_frame
-    paragraph(tf, [run(body, 6.45, False, SLATE)], first=True, line_spacing=1.0)
+    tf = textbox(LX + 0.79, y, 2.05, 0.19).text_frame
+    paragraph(tf, [run(body, 6.55, False, SLATE)], first=True)
 
-tf = textbox(LX, 5.83, LW, 0.18).text_frame
-paragraph(tf, [run("ROAD TO FINAL SUBMISSION  ·  26 NOV", 8.2, True, CRIMSON)], first=True)
-shape(MSO_SHAPE.ROUNDED_RECTANGLE, LX, 6.07, LW, 0.93, fill=PALE_AMBER, line=RGBColor(0xDC, 0xBE, 0x99), radius=True)
-tf = textbox(LX + 0.13, 6.18, LW - 0.26, 0.70).text_frame
+tf = textbox(LX, 6.27, LW, 0.18).text_frame
+paragraph(tf, [run("WHAT WE MEASURE", 8.2, True, CRIMSON)], first=True)
+shape(MSO_SHAPE.ROUNDED_RECTANGLE, LX, 6.51, LW, 0.49, fill=PALE_AMBER, line=RGBColor(0xDC, 0xBE, 0x99), radius=True)
+tf = textbox(LX + 0.13, 6.63, LW - 0.26, 0.22).text_frame
 paragraph(
     tf,
-    [run("1  Training law", 7.2, True, AMBER), run("  93% of final Cora MRR is reached by epoch 42/150.", 6.8, False, SLATE)],
+    [run("Test MRR ×100  ·  measured T4 GPU time  ·  peak VRAM  ·  three random seeds per budget", 6.8, True, SLATE)],
     first=True,
-    line_spacing=1.02,
-    space_after=3,
-)
-paragraph(
-    tf,
-    [run("2  Deliverables", 7.2, True, AMBER), run("  closed-form selector · latency/VRAM Pareto · final report · PPT video · reproducible code.", 6.8, False, SLATE)],
-    line_spacing=1.02,
+    align=PP_ALIGN.CENTER,
 )
 
 # -----------------------------------------------------------------------------
 # COLUMN 2 — FOUR DETAILED EMPIRICAL FINDINGS
 # -----------------------------------------------------------------------------
 tf = textbox(MX, 1.15, MW, 0.18).text_frame
-paragraph(tf, [run("02  FOUR EMPIRICAL COMPUTE-ALLOCATION LAWS", 8.2, True, CRIMSON)], first=True)
+paragraph(tf, [run("RESULTS FROM THE BUDGET SWEEP", 8.2, True, CRIMSON)], first=True)
 
 findings = [
     (
@@ -396,7 +394,7 @@ shape(MSO_SHAPE.ROUNDED_RECTANGLE, MX, 6.55, MW, 0.45, fill=NAVY, radius=True)
 tf = textbox(MX + 0.16, 6.65, MW - 0.32, 0.23, valign=MSO_ANCHOR.MIDDLE).text_frame
 paragraph(
     tf,
-    [run("INTERIM LAW  ", 7.4, True, PALE_BLUE), run("reduce fanout first; reserve full context for the hard regime.", 7.6, True, WHITE)],
+    [run("Main result: ", 7.4, True, PALE_BLUE), run("reducing fanout is usually safer than shortening the candidate list.", 7.6, True, WHITE)],
     first=True,
     align=PP_ALIGN.CENTER,
 )
@@ -405,7 +403,7 @@ paragraph(
 # COLUMN 3 — FIGURES, BENCHMARK MATRIX, TRANSFER + RESOURCE EVIDENCE
 # -----------------------------------------------------------------------------
 tf = textbox(RX, 1.15, RW, 0.18).text_frame
-paragraph(tf, [run("03  EVIDENCE ACROSS FOUR TEST REGIMES", 8.2, True, CRIMSON)], first=True)
+paragraph(tf, [run("BUDGET SWEEPS", 8.2, True, CRIMSON)], first=True)
 
 shape(MSO_SHAPE.ROUNDED_RECTANGLE, RX, 1.40, RW, 1.92, fill=WHITE, line=RULE, radius=True)
 slide.shapes.add_picture(
@@ -476,7 +474,7 @@ table_bottom = table_y + header_h + len(rows) * row_h
 shape(MSO_SHAPE.RECTANGLE, table_x, table_bottom, RW, 0.018, fill=INK)
 
 tf = textbox(RX, 5.87, RW, 0.18).text_frame
-paragraph(tf, [run("TRANSFER + RESOURCE EVIDENCE", 8.2, True, CRIMSON)], first=True)
+paragraph(tf, [run("ADDITIONAL RESULTS", 8.2, True, CRIMSON)], first=True)
 shape(MSO_SHAPE.ROUNDED_RECTANGLE, RX, 6.10, RW, 0.90, fill=WHITE, line=RULE, radius=True)
 shape(MSO_SHAPE.RECTANGLE, RX, 6.10, 0.045, 0.90, fill=TEAL)
 tf = textbox(RX + 0.15, 6.20, 2.30, 0.66).text_frame
@@ -500,7 +498,7 @@ rule(0.39, 7.18, 12.55)
 tf = textbox(0.39, 7.25, 12.55, 0.14).text_frame
 paragraph(
     tf,
-    [run("Reproducible code + 112 score dumps: github.com/Ask-812/da4022-pencil-budget", 6.4, True, MUTED, "Consolas")],
+    [run("All operating points are selected on validation data; test data are used only for the reported results.", 6.5, True, MUTED)],
     first=True,
     align=PP_ALIGN.CENTER,
 )

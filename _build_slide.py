@@ -1,54 +1,151 @@
-"""Builds the 1-slide mid-project report: MIDREPORT.pptx (+ PDF via PowerPoint).
+"""Build the one-slide DA4022 mid-project report.
 
-Designed in the editorial visual language of the team's PENCIL Devil's Advocate deck:
-- Warm editorial paper canvas (#FAF8F5) with a full-height Deep Crimson left spine (#9D1B32)
-- Georgia Bold display serif headline + Segoe UI precision body + Consolas tabular numerals
-- Custom vector schematic for the 2-stage retrieve-then-rerank pipeline
-- Numbered editorial findings (01-04) with hairline separators (zero generic bullet dumps)
-- 3-panel despined Tufte/Economist matplotlib figure (results/fig_mid.png)
-- Custom Booktabs benchmark table across all 4 regimes (Cora/Citeseer x Pool/HeaRT)
+The slide is designed as a presentation, not a compressed report page:
+one claim, four directly comparable results, a compact method diagram,
+and a clear statement of completed and remaining work.
 """
-import json, os
+
+import csv
+import json
+import os
+from statistics import mean, pstdev
+
+import matplotlib.pyplot as plt
 from pptx import Presentation
-from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
-from pptx.enum.text import PP_ALIGN
 from pptx.enum.shapes import MSO_SHAPE
+from pptx.enum.text import MSO_ANCHOR, PP_ALIGN
+from pptx.util import Inches, Pt
+
 from team import NAMES, ROLLS
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-RES  = os.path.join(HERE, "results")
-SEL  = json.load(open(os.path.join(RES, "selection.json")))
 
-# Editorial color palette
-C_BG       = RGBColor(0xFA, 0xF8, 0xF5)  # warm paper
-C_WHITE    = RGBColor(0xFF, 0xFF, 0xFF)
-C_IVORY    = RGBColor(0xF5, 0xEF, 0xE4)  # warm callout tint
-C_SLATE_BG = RGBColor(0xF0, 0xF3, 0xF6)  # cool card tint
-C_ROSE_BG  = RGBColor(0xF9, 0xF1, 0xF2)  # soft crimson tint
-C_INK      = RGBColor(0x12, 0x16, 0x1C)  # primary ink
-C_SLATE    = RGBColor(0x33, 0x3B, 0x45)  # body text
-C_MUTED    = RGBColor(0x6E, 0x77, 0x81)  # captions / metadata
-C_RULE     = RGBColor(0xDC, 0xE1, 0xE7)  # hairline rule
-C_CRIMSON  = RGBColor(0x9D, 0x1B, 0x32)  # signature accent
-C_NAVY     = RGBColor(0x1F, 0x3A, 0x5F)  # official PENCIL accent
-C_TEAL     = RGBColor(0x14, 0x74, 0x6F)  # sweet-spot s=2x10 accent
-C_AMBER    = RGBColor(0xB8, 0x5D, 0x14)  # frugal hybrid accent
+HERE = os.path.dirname(os.path.abspath(__file__))
+RESULTS = os.path.join(HERE, "results")
+PUBLIC = os.environ.get("PENCIL_PUBLIC") == "1"
+
+# Warm editorial palette.
+PAPER = RGBColor(0xF7, 0xF3, 0xEC)
+WHITE = RGBColor(0xFF, 0xFF, 0xFF)
+INK = RGBColor(0x17, 0x1A, 0x1F)
+SLATE = RGBColor(0x43, 0x49, 0x52)
+MUTED = RGBColor(0x77, 0x7D, 0x85)
+RULE = RGBColor(0xD9, 0xD4, 0xCB)
+CRIMSON = RGBColor(0x9D, 0x1B, 0x32)
+NAVY = RGBColor(0x20, 0x36, 0x57)
+TEAL = RGBColor(0x0F, 0x76, 0x70)
+AMBER = RGBColor(0xB4, 0x63, 0x18)
+PALE_ROSE = RGBColor(0xF4, 0xE7, 0xE9)
+PALE_TEAL = RGBColor(0xE4, 0xF0, 0xED)
+PALE_AMBER = RGBColor(0xF5, 0xEA, 0xDA)
+PALE_BLUE = RGBColor(0xE8, 0xED, 0xF3)
+
+
+def load_metrics():
+    selection = json.load(open(os.path.join(RESULTS, "selection.json"), encoding="utf-8"))
+    order = ["cora_pool", "citeseer_pool", "cora_heart", "citeseer_heart"]
+    labels = ["Cora\nPool", "Citeseer\nPool", "Cora\nHeaRT", "Citeseer\nHeaRT"]
+    metrics = []
+
+    for tag, label in zip(order, labels):
+        rows = []
+        with open(os.path.join(RESULTS, tag, "ksweep.csv"), newline="", encoding="utf-8") as f:
+            for row in csv.DictReader(f):
+                if (
+                    row["split"] == "test"
+                    and row["budget"] == "d2_f10"
+                    and abs(float(row["frac"]) - 1.0) < 1e-12
+                ):
+                    rows.append(float(row["mrr"]) * 100)
+
+        if not rows:
+            raise RuntimeError(f"Missing d2_f10 full-candidate rows for {tag}")
+
+        selected_10 = next(r for r in selection[tag]["rows"] if abs(r["cap"] - 0.1) < 1e-12)
+        metrics.append(
+            {
+                "tag": tag,
+                "label": label,
+                "aa": selection[tag]["aa_test"],
+                "frugal": selected_10["test"],
+                "frugal_cost": selected_10["cost"] * 100,
+                "half": mean(rows),
+                "half_std": pstdev(rows),
+                "full": selection[tag]["full_test"],
+                "full_std": selection[tag]["full_std"],
+            }
+        )
+    return metrics
+
+
+def make_comparison_figure(metrics):
+    out = os.path.join(RESULTS, "fig_mid_v2.png")
+    plt.rcParams.update(
+        {
+            "font.family": "DejaVu Sans",
+            "font.size": 8,
+            "axes.titleweight": "bold",
+            "axes.edgecolor": "#D9D4CB",
+            "axes.labelcolor": "#434952",
+            "xtick.color": "#777D85",
+            "ytick.color": "#777D85",
+        }
+    )
+    fig, axes = plt.subplots(1, 4, figsize=(12.4, 2.6), dpi=220)
+    fig.patch.set_facecolor("#FFFFFF")
+    colors = ["#C9CDD2", "#B46318", "#0F7670", "#203657"]
+    names = ["AA", "≤10%", "2×10", "2×20"]
+
+    for ax, item in zip(axes, metrics):
+        values = [item["aa"], item["frugal"], item["half"], item["full"]]
+        bars = ax.bar(range(4), values, color=colors, width=0.68)
+        lower = max(0, min(values) - max(2.0, (max(values) - min(values)) * 0.35))
+        upper = max(values) + max(2.0, (max(values) - min(values)) * 0.28)
+        ax.set_ylim(lower, upper)
+        ax.set_xticks(range(4), names, fontsize=7.3)
+        ax.set_title(item["label"].replace("\n", " · "), fontsize=9.2, color="#171A1F", pad=7)
+        ax.grid(axis="y", color="#E8E4DD", linewidth=0.65)
+        ax.set_axisbelow(True)
+        ax.spines[["top", "right", "left"]].set_visible(False)
+        ax.tick_params(axis="y", length=0, labelsize=6.8)
+        ax.tick_params(axis="x", length=0, pad=4)
+        for bar, value in zip(bars, values):
+            ax.text(
+                bar.get_x() + bar.get_width() / 2,
+                value + (upper - lower) * 0.035,
+                f"{value:.1f}",
+                ha="center",
+                va="bottom",
+                fontsize=7.3,
+                fontweight="bold",
+                color="#171A1F",
+            )
+
+    fig.text(0.009, 0.54, "Test MRR ×100", rotation=90, va="center", color="#777D85", fontsize=7.5)
+    fig.text(
+        0.5,
+        0.01,
+        "AA = CPU heuristic  ·  ≤10% = validation-selected hybrid  ·  2×10 = half fanout  ·  2×20 = official full PENCIL",
+        ha="center",
+        color="#5E646D",
+        fontsize=7.2,
+    )
+    fig.subplots_adjust(left=0.045, right=0.995, top=0.82, bottom=0.25, wspace=0.28)
+    fig.savefig(out, facecolor="white", bbox_inches="tight", pad_inches=0.04)
+    plt.close(fig)
+    return out
+
 
 prs = Presentation()
-prs.slide_width  = Inches(13.333)
-prs.slide_height = Inches(7.500)
-s = prs.slides.add_slide(prs.slide_layouts[6])
+prs.slide_width = Inches(13.333)
+prs.slide_height = Inches(7.5)
+slide = prs.slides.add_slide(prs.slide_layouts[6])
 
 
-def rect(x, y, w, h, fill=None, line=None, line_pt=0.75, rounded=False):
-    kind = MSO_SHAPE.ROUNDED_RECTANGLE if rounded else MSO_SHAPE.RECTANGLE
-    sh = s.shapes.add_shape(kind, Inches(x), Inches(y), Inches(w), Inches(h))
-    if rounded:
-        try:
-            sh.adjustments[0] = 0.08
-        except Exception:
-            pass
+def shape(kind, x, y, w, h, fill=None, line=None, line_width=0.7, radius=False):
+    if radius:
+        kind = MSO_SHAPE.ROUNDED_RECTANGLE
+    sh = slide.shapes.add_shape(kind, Inches(x), Inches(y), Inches(w), Inches(h))
     if fill is None:
         sh.fill.background()
     else:
@@ -58,32 +155,47 @@ def rect(x, y, w, h, fill=None, line=None, line_pt=0.75, rounded=False):
         sh.line.fill.background()
     else:
         sh.line.color.rgb = line
-        sh.line.width = Pt(line_pt)
+        sh.line.width = Pt(line_width)
+    if radius:
+        try:
+            sh.adjustments[0] = 0.08
+        except Exception:
+            pass
     return sh
 
 
-def tbox(x, y, w, h, margin=0.0):
-    sh = s.shapes.add_textbox(Inches(x), Inches(y), Inches(w), Inches(h))
+def textbox(x, y, w, h, text="", margin=0.0, valign=MSO_ANCHOR.TOP):
+    sh = slide.shapes.add_textbox(Inches(x), Inches(y), Inches(w), Inches(h))
     tf = sh.text_frame
+    tf.clear()
     tf.word_wrap = True
     tf.margin_left = tf.margin_right = Inches(margin)
     tf.margin_top = tf.margin_bottom = Inches(margin)
-    return tf
+    tf.vertical_anchor = valign
+    if text:
+        tf.paragraphs[0].text = text
+    return sh
 
 
-def add_p(tf, runs, align=PP_ALIGN.LEFT, space_after=0, space_before=0, line_spacing=1.08, first=False):
+def paragraph(
+    tf,
+    runs,
+    *,
+    first=False,
+    align=PP_ALIGN.LEFT,
+    line_spacing=1.0,
+    space_after=0,
+    space_before=0,
+):
     p = tf.paragraphs[0] if first else tf.add_paragraph()
     p.alignment = align
+    p.line_spacing = line_spacing
     p.space_after = Pt(space_after)
     p.space_before = Pt(space_before)
-    p.line_spacing = line_spacing
-    for item in runs:
-        text, size, bold, color = item[0], item[1], item[2], item[3]
-        font_name = item[4] if len(item) > 4 else "Segoe UI"
-        italic = item[5] if len(item) > 5 else False
+    for text, size, bold, color, font, italic in runs:
         r = p.add_run()
         r.text = text
-        r.font.name = font_name
+        r.font.name = font
         r.font.size = Pt(size)
         r.font.bold = bold
         r.font.italic = italic
@@ -91,243 +203,234 @@ def add_p(tf, runs, align=PP_ALIGN.LEFT, space_after=0, space_before=0, line_spa
     return p
 
 
-# ==============================================================================
-# 0. CANVAS & SIGNATURE LEFT SPINE
-# ==============================================================================
-rect(0, 0, 13.333, 7.500, fill=C_BG)
-rect(0, 0, 0.115, 7.500, fill=C_CRIMSON)
+def run(text, size, bold=False, color=INK, font="Aptos", italic=False):
+    return (text, size, bold, color, font, italic)
 
-# ==============================================================================
-# 1. EDITORIAL HEADER & TEAM ROSTER (y = 0.15 .. 0.88)
-# ==============================================================================
-tf = tbox(0.34, 0.14, 7.60, 0.20)
-add_p(tf, [("DA4022 MID-PROJECT REPORT   ·   SELF-PROPOSED (ANCHOR #2)   ·   EXTENDING PENCIL (ICML 2026)",
-            8.2, True, C_CRIMSON)], first=True)
 
-tf = tbox(0.34, 0.34, 7.65, 0.40)
-add_p(tf, [
-    ("How Much PENCIL Can You Afford?", 19.2, True, C_INK, "Georgia"),
-    ("   Compute-Allocation Laws for Link Prediction", 11.4, True, C_SLATE, "Segoe UI"),
-], first=True)
+def rule(x, y, w, color=RULE, height=0.012):
+    shape(MSO_SHAPE.RECTANGLE, x, y, w, height, fill=color)
 
-# Team roster grid on top-right (matching Slide 1 of Devil's Advocate deck)
-team_order = [NAMES[0], NAMES[1], NAMES[2], NAMES[3], NAMES[4]]
-tx0 = 8.05
-tw  = 1.01
-for idx, name in enumerate(team_order):
-    cx = tx0 + idx * tw
-    if idx > 0:
-        rect(cx - 0.04, 0.22, 0.01, 0.48, fill=C_RULE)
-    parts = name.split(" ")
-    tf_m = tbox(cx, 0.19, tw - 0.05, 0.54)
-    add_p(tf_m, [(parts[0], 8.8, True, C_INK)], first=True, line_spacing=1.0)
-    add_p(tf_m, [(parts[1], 8.5, False, C_SLATE)], space_after=1, line_spacing=1.0)
-    roll_txt = ROLLS.get(name, "DA4022")
-    add_p(tf_m, [(roll_txt, 7.5, False, C_MUTED, "Consolas")], line_spacing=1.0)
 
-# Header accent rules
-rect(0.34, 0.80, 0.78, 0.038, fill=C_CRIMSON)
-rect(1.16, 0.818, 11.92, 0.012, fill=C_RULE)
+metrics = load_metrics()
+chart_path = make_comparison_figure(metrics)
 
-# ==============================================================================
-# 2. LEFT COLUMN: ARCHITECTURE, REPRODUCTION & 4 EMPIRICAL LAWS (x = 0.34 .. 4.62)
-# ==============================================================================
-LX, LW = 0.34, 4.28
+# Canvas and structural accents.
+shape(MSO_SHAPE.RECTANGLE, 0, 0, 13.333, 7.5, fill=PAPER)
+shape(MSO_SHAPE.RECTANGLE, 0, 0, 13.333, 0.075, fill=CRIMSON)
+shape(MSO_SHAPE.RECTANGLE, 0.27, 0.31, 0.055, 6.87, fill=CRIMSON)
 
-# --- Section I: Architecture schematic ---
-tf = tbox(LX, 0.90, LW, 0.20)
-add_p(tf, [("I.  TWO-STAGE RETRIEVE-THEN-RERANK PIPELINE", 8.3, True, C_CRIMSON)], first=True)
+# Header.
+tf = textbox(0.55, 0.25, 8.8, 0.24).text_frame
+paragraph(
+    tf,
+    [run("DA4022  /  MID-PROJECT REPORT  /  15 OCT 2026", 8.5, True, CRIMSON, "Aptos")],
+    first=True,
+)
 
-rect(LX, 1.11, LW, 1.12, fill=C_WHITE, line=C_RULE, line_pt=0.8)
-rect(LX, 1.11, 0.045, 1.12, fill=C_NAVY)
+tf = textbox(0.55, 0.50, 8.35, 0.43).text_frame
+paragraph(
+    tf,
+    [run("Full-budget PENCIL is", 28, True, INK, "Georgia")],
+    first=True,
+)
+tf = textbox(0.55, 1.00, 8.35, 0.43).text_frame
+paragraph(
+    tf,
+    [run("often unnecessary.", 28, True, CRIMSON, "Georgia")],
+    first=True,
+)
 
-# 3 pipeline stage boxes inside card
-# Box 1: Candidate Pool
-rect(LX + 0.12, 1.20, 1.06, 0.54, fill=C_SLATE_BG, line=C_RULE, line_pt=0.75, rounded=True)
-tf = tbox(LX + 0.14, 1.23, 1.02, 0.48)
-add_p(tf, [("Candidate Pool\n", 7.8, True, C_INK),
-           ("N pairs (Pool) or\n501 / query (HeaRT)", 6.6, False, C_MUTED)],
-      align=PP_ALIGN.CENTER, first=True, line_spacing=1.02)
+tf = textbox(9.05, 0.27, 3.72, 0.95).text_frame
+paragraph(
+    tf,
+    [run("HOW MUCH PENCIL CAN YOU AFFORD?", 8.3, True, MUTED, "Aptos")],
+    first=True,
+    align=PP_ALIGN.RIGHT,
+)
+paragraph(
+    tf,
+    [run("Compute-allocation laws for link prediction", 12.2, True, NAVY, "Georgia")],
+    align=PP_ALIGN.RIGHT,
+    space_before=3,
+    line_spacing=1.02,
+)
 
-# Arrow 1
-tf = tbox(LX + 1.19, 1.33, 0.21, 0.25)
-add_p(tf, [("→", 11.5, True, C_MUTED)], align=PP_ALIGN.CENTER, first=True)
+rule(0.55, 1.49, 12.23)
 
-# Box 2: Stage 1 Adamic-Adar
-rect(LX + 1.41, 1.20, 1.24, 0.54, fill=C_IVORY, line=C_AMBER, line_pt=0.9, rounded=True)
-tf = tbox(LX + 1.43, 1.23, 1.20, 0.48)
-add_p(tf, [("Stage 1 · Adamic–Adar\n", 7.6, True, C_AMBER),
-           ("CPU <1 ms · 0% GPU\nranks & shortlists top k", 6.6, False, C_SLATE)],
-      align=PP_ALIGN.CENTER, first=True, line_spacing=1.02)
+# Hero statement.
+shape(MSO_SHAPE.ROUNDED_RECTANGLE, 0.55, 1.72, 12.23, 1.15, fill=NAVY, radius=True)
+tf = textbox(0.82, 1.83, 2.15, 0.86, valign=MSO_ANCHOR.MIDDLE).text_frame
+paragraph(
+    tf,
+    [run("65%", 42, True, WHITE, "Georgia")],
+    first=True,
+    align=PP_ALIGN.CENTER,
+)
+tf = textbox(2.97, 1.91, 0.95, 0.62, valign=MSO_ANCHOR.MIDDLE).text_frame
+paragraph(
+    tf,
+    [run("GPU\nbudget", 11.2, True, PALE_BLUE, "Aptos")],
+    first=True,
+    line_spacing=1.05,
+)
+shape(MSO_SHAPE.RECTANGLE, 4.05, 1.96, 0.015, 0.65, fill=RGBColor(0x5C, 0x6C, 0x83))
+tf = textbox(4.32, 1.86, 5.62, 0.72, valign=MSO_ANCHOR.MIDDLE).text_frame
+paragraph(
+    tf,
+    [run("matches or beats full PENCIL", 20, True, WHITE, "Georgia")],
+    first=True,
+)
+paragraph(
+    tf,
+    [run("in 3 of 4 test regimes — with ~40% less peak VRAM on Cora HeaRT.", 10.3, False, PALE_BLUE, "Aptos")],
+    space_before=3,
+)
+shape(MSO_SHAPE.ROUNDED_RECTANGLE, 10.34, 1.96, 2.15, 0.63, fill=RGBColor(0x2B, 0x4A, 0x70), radius=True)
+tf = textbox(10.47, 2.04, 1.89, 0.44, valign=MSO_ANCHOR.MIDDLE).text_frame
+paragraph(
+    tf,
+    [run("s = 2×10  vs  2×20", 10.2, True, WHITE, "Consolas")],
+    first=True,
+    align=PP_ALIGN.CENTER,
+)
 
-# Arrow 2
-tf = tbox(LX + 2.66, 1.33, 0.21, 0.25)
-add_p(tf, [("→", 11.5, True, C_CRIMSON)], align=PP_ALIGN.CENTER, first=True)
+# Left column: question, method, progress.
+LX, LW = 0.55, 3.48
+tf = textbox(LX, 3.12, LW, 0.20).text_frame
+paragraph(tf, [run("THE QUESTION", 8.5, True, CRIMSON, "Aptos")], first=True)
+tf = textbox(LX, 3.36, LW, 0.72).text_frame
+paragraph(
+    tf,
+    [run("Can we spend PENCIL's GPU compute only where a cheap graph heuristic is uncertain?", 13.2, True, INK, "Georgia")],
+    first=True,
+    line_spacing=1.03,
+)
 
-# Box 3: Stage 2 PENCIL
-rect(LX + 2.88, 1.20, 1.30, 0.54, fill=C_SLATE_BG, line=C_NAVY, line_pt=1.0, rounded=True)
-tf = tbox(LX + 2.90, 1.23, 1.26, 0.48)
-add_p(tf, [("Stage 2 · PENCIL\n", 7.8, True, C_NAVY),
-           ("Transformer re-scores\ntop k with budget s", 6.6, False, C_SLATE)],
-      align=PP_ALIGN.CENTER, first=True, line_spacing=1.02)
+tf = textbox(LX, 4.20, LW, 0.20).text_frame
+paragraph(tf, [run("OUR INFERENCE-ONLY METHOD", 8.5, True, CRIMSON, "Aptos")], first=True)
 
-# Two inference knob strips at bottom of architecture card
-rect(LX + 0.12, 1.81, 4.06, 0.34, fill=C_BG, line=C_RULE, line_pt=0.5)
-tf = tbox(LX + 0.18, 1.84, 3.96, 0.28)
-add_p(tf, [
-    ("TWO INFERENCE KNOBS (NO RETRAINING):   ", 7.2, True, C_CRIMSON),
-    ("k", 7.8, True, C_INK, "Consolas"),
-    (" = shortlist re-ranked (0–100%)   ·   ", 7.2, False, C_SLATE),
-    ("s", 7.8, True, C_INK, "Consolas"),
-    (" = subgraph hops×fanout", 7.2, False, C_SLATE),
-], first=True)
-
-# --- Section II: Reproduction & Audit KPI Strip ---
-tf = tbox(LX, 2.31, LW, 0.20)
-add_p(tf, [("II.  FREE-GPU REPRODUCTION & AUDIT (PAPER USED 4–8× A100)", 8.3, True, C_CRIMSON)], first=True)
-
-kpis = [
-    ("44.00", "Cora Test MRR", "Paper: 42.23 · 1×T4, 3.2h", C_NAVY),
-    ("50.46", "Citeseer Test MRR", "Paper: 47.51 · 2×T4, 1.0h", C_TEAL),
-    ("112 Runs", "4 Regimes Audited", "HeaRT AA exact · Δ<10⁻⁷", C_CRIMSON),
+steps = [
+    ("1", "Rank", "Adamic–Adar\non CPU", PALE_AMBER, AMBER),
+    ("2", "Shortlist", "top k candidate\npairs", PALE_ROSE, CRIMSON),
+    ("3", "Re-rank", "PENCIL with\nbudget s", PALE_BLUE, NAVY),
 ]
-kw = 1.38
-for idx, (big, mid, sub, col) in enumerate(kpis):
-    kx = LX + idx * (kw + 0.07)
-    rect(kx, 2.52, kw, 0.74, fill=C_WHITE, line=C_RULE, line_pt=0.8)
-    rect(kx, 2.52, kw, 0.04, fill=col)
-    tf = tbox(kx + 0.08, 2.58, kw - 0.16, 0.64)
-    add_p(tf, [(big, 13.5, True, col, "Georgia")], first=True, line_spacing=1.0)
-    add_p(tf, [(mid, 7.8, True, C_INK)], space_before=1, line_spacing=1.0)
-    add_p(tf, [(sub, 6.7, False, C_MUTED)], space_before=1, line_spacing=1.0)
+for i, (num, title, body, bg, accent) in enumerate(steps):
+    x = LX + i * 1.15
+    shape(MSO_SHAPE.ROUNDED_RECTANGLE, x, 4.48, 1.04, 0.94, fill=bg, line=RULE, radius=True)
+    shape(MSO_SHAPE.OVAL, x + 0.08, 4.58, 0.22, 0.22, fill=accent)
+    tf = textbox(x + 0.08, 4.575, 0.22, 0.20, valign=MSO_ANCHOR.MIDDLE).text_frame
+    paragraph(tf, [run(num, 7.2, True, WHITE, "Aptos")], first=True, align=PP_ALIGN.CENTER)
+    tf = textbox(x + 0.35, 4.55, 0.60, 0.22).text_frame
+    paragraph(tf, [run(title, 8.5, True, accent, "Aptos")], first=True)
+    tf = textbox(x + 0.08, 4.86, 0.88, 0.42).text_frame
+    paragraph(tf, [run(body, 7.5, False, SLATE, "Aptos")], first=True, align=PP_ALIGN.CENTER, line_spacing=0.95)
+    if i < 2:
+        tf = textbox(x + 1.04, 4.78, 0.11, 0.22).text_frame
+        paragraph(tf, [run("›", 16, True, MUTED, "Georgia")], first=True, align=PP_ALIGN.CENTER)
 
-# --- Section III: 4 Numbered Findings (Editorial Slide-2 Style) ---
-tf = tbox(LX, 3.35, LW, 0.20)
-add_p(tf, [("III.  FOUR EMPIRICAL COMPUTE-ALLOCATION FINDINGS", 8.3, True, C_CRIMSON)], first=True)
-
-findings = [
-    ("01", "Official s = 2×20 over-reads in 3 of 4 regimes",
-     "Halving fanout to s = 2×10 (~65% GPU, 40% less VRAM) matches Cora (42.9 vs 43.7) and beats full PENCIL on Citeseer Pool (51.4 vs 49.7) and Cora HeaRT (14.3 vs 13.3). Only Citeseer HeaRT needs full 2×20 (17.8 vs 14.2)."),
-    ("02", "Frugal hybrid (≤10% GPU) beats heuristics in all 4 tests",
-     "Choosing (k, s) on validation alone under a 10% compute cap lifts Test MRR over Adamic–Adar everywhere: 33.1 → 38.4 on Cora (7% GPU) and 11.0 → 13.8 on Citeseer HeaRT (8% GPU)."),
-    ("03", "Top-10% re-ranking is wasted; PENCIL pays off in the 0-CN tail",
-     "AA's top decile is already true links, so re-ranking k ≤ 10% changes nothing. PENCIL earns its FLOPs where AA is blind: 57.3% of true Cora test links share zero common neighbours."),
-    ("04", "Cross-graph budget rules beat noisy local validation",
-     "Applying Cora's validation-chosen (k, s) unchanged to Citeseer Pool beats Citeseer's own validation pick at every cap ≤ 50% (44.9 vs 37.9 MRR at 25% cap) because small-graph validation is noisy."),
+tf = textbox(LX, 5.66, LW, 0.20).text_frame
+paragraph(tf, [run("MID-PROJECT STATUS", 8.5, True, CRIMSON, "Aptos")], first=True)
+status_lines = [
+    ("✓", "Reproduced PENCIL", "Cora 44.00 · Citeseer 50.46"),
+    ("✓", "112 evaluation runs", "2 graphs × 2 protocols × budgets"),
+    ("→", "Next: final decision rule", "latency/VRAM Pareto + final report"),
 ]
+for i, (mark, title, detail) in enumerate(status_lines):
+    y = 5.93 + i * 0.37
+    color = TEAL if mark == "✓" else AMBER
+    tf = textbox(LX, y, 0.25, 0.22).text_frame
+    paragraph(tf, [run(mark, 10.5, True, color, "Aptos")], first=True)
+    tf = textbox(LX + 0.29, y, 3.15, 0.25).text_frame
+    paragraph(
+        tf,
+        [run(title, 8.5, True, INK, "Aptos"), run("  " + detail, 7.5, False, MUTED, "Aptos")],
+        first=True,
+    )
 
-fy = 3.57
-fh = 0.89
-for idx, (num, title, body) in enumerate(findings):
-    y0 = fy + idx * fh
-    rect(LX, y0, LW, fh - 0.05, fill=C_WHITE, line=C_RULE, line_pt=0.7)
-    rect(LX, y0, 0.42, fh - 0.05, fill=C_ROSE_BG)
-    rect(LX, y0, 0.04, fh - 0.05, fill=C_CRIMSON)
-    tf_n = tbox(LX + 0.04, y0 + 0.22, 0.38, 0.40)
-    add_p(tf_n, [(num, 12.5, True, C_CRIMSON, "Georgia")], align=PP_ALIGN.CENTER, first=True)
+# Right column: four result cards.
+RX, RW = 4.32, 8.46
+tf = textbox(RX, 3.12, RW, 0.20).text_frame
+paragraph(
+    tf,
+    [run("HALF-FANOUT RESULT  /  TEST MRR ×100", 8.5, True, CRIMSON, "Aptos")],
+    first=True,
+)
 
-    tf_b = tbox(LX + 0.50, y0 + 0.05, LW - 0.58, fh - 0.12)
-    add_p(tf_b, [(title, 8.8, True, C_INK)], first=True, space_after=1.5, line_spacing=1.02)
-    add_p(tf_b, [(body, 7.35, False, C_SLATE)], line_spacing=1.06)
+card_gap = 0.12
+card_w = (RW - 3 * card_gap) / 4
+for i, item in enumerate(metrics):
+    x = RX + i * (card_w + card_gap)
+    delta = item["half"] - item["full"]
+    if delta > 0.25:
+        verdict, bg, accent = "BEATS FULL", PALE_TEAL, TEAL
+    elif delta > -1.0:
+        verdict, bg, accent = "MATCHES", PALE_BLUE, NAVY
+    else:
+        verdict, bg, accent = "NEEDS FULL", PALE_ROSE, CRIMSON
 
-# ==============================================================================
-# 3. RIGHT COLUMN: 3-PANEL PARETO FIGURE + BOOKTABS TABLE + ROADMAP (x = 4.78 .. 13.08)
-# ==============================================================================
-RX, RW = 4.78, 8.30
+    shape(MSO_SHAPE.ROUNDED_RECTANGLE, x, 3.40, card_w, 1.42, fill=WHITE, line=RULE, radius=True)
+    shape(MSO_SHAPE.RECTANGLE, x, 3.40, card_w, 0.055, fill=accent)
+    tf = textbox(x + 0.12, 3.54, card_w - 0.24, 0.24).text_frame
+    paragraph(
+        tf,
+        [run(item["label"].replace("\n", " · "), 8.7, True, SLATE, "Aptos")],
+        first=True,
+        align=PP_ALIGN.CENTER,
+    )
+    tf = textbox(x + 0.10, 3.83, card_w - 0.20, 0.42).text_frame
+    paragraph(
+        tf,
+        [run(f"{item['half']:.1f}", 22, True, accent, "Georgia")],
+        first=True,
+        align=PP_ALIGN.CENTER,
+    )
+    tf = textbox(x + 0.10, 4.23, card_w - 0.20, 0.20).text_frame
+    paragraph(
+        tf,
+        [run(f"full: {item['full']:.1f}", 7.6, False, MUTED, "Consolas")],
+        first=True,
+        align=PP_ALIGN.CENTER,
+    )
+    shape(MSO_SHAPE.ROUNDED_RECTANGLE, x + 0.32, 4.49, card_w - 0.64, 0.23, fill=bg, radius=True)
+    tf = textbox(x + 0.34, 4.515, card_w - 0.68, 0.17, valign=MSO_ANCHOR.MIDDLE).text_frame
+    paragraph(tf, [run(verdict, 7.0, True, accent, "Aptos")], first=True, align=PP_ALIGN.CENTER)
 
-# --- Section IV: 3-Panel Figure ---
-tf = tbox(RX, 0.90, RW, 0.20)
-add_p(tf, [("IV.  SHORTLIST SWEEP, PARETO FRONTIER & HARD-NEGATIVE (HeaRT) REGIMES", 8.3, True, C_CRIMSON)], first=True)
+# Evidence chart.
+tf = textbox(RX, 5.03, RW, 0.20).text_frame
+paragraph(
+    tf,
+    [run("THE FULL BUDGET IS NOT THE DEFAULT WINNER", 8.5, True, CRIMSON, "Aptos")],
+    first=True,
+)
+shape(MSO_SHAPE.ROUNDED_RECTANGLE, RX, 5.30, RW, 1.47, fill=WHITE, line=RULE, radius=True)
+slide.shapes.add_picture(chart_path, Inches(RX + 0.09), Inches(5.36), width=Inches(RW - 0.18), height=Inches(1.34))
 
-rect(RX, 1.11, RW, 2.66, fill=C_WHITE, line=C_RULE, line_pt=0.8)
-s.shapes.add_picture(os.path.join(RES, "fig_mid.png"), Inches(RX + 0.04), Inches(1.13), width=Inches(RW - 0.08))
+# Bottom takeaway and authors.
+rule(0.55, 7.04, 12.23)
+tf = textbox(0.55, 7.13, 8.3, 0.20).text_frame
+paragraph(
+    tf,
+    [
+        run("INTERIM LAW: ", 8.2, True, CRIMSON, "Aptos"),
+        run("reduce neighborhood fanout first; reserve full context for the hard regime.", 8.2, True, INK, "Aptos"),
+    ],
+    first=True,
+)
 
-# --- Section V: Custom Booktabs Benchmark & Transfer Table ---
-tf = tbox(RX, 3.84, RW, 0.20)
-add_p(tf, [("V.  VALIDATION-SELECTED OPERATING POINTS & CROSS-GRAPH TRANSFER  (TEST MRR ×100, MEAN ± STD)",
-            8.3, True, C_CRIMSON)], first=True)
+team_parts = []
+for name in NAMES:
+    text = name
+    if not PUBLIC:
+        text += f" ({ROLLS[name]})"
+    team_parts.append(text)
+tf = textbox(8.60, 7.10, 4.18, 0.24).text_frame
+paragraph(
+    tf,
+    [run(" · ".join(team_parts), 6.4, False, MUTED, "Aptos")],
+    first=True,
+    align=PP_ALIGN.RIGHT,
+)
 
-TY = 4.05
-cols = [
-    ("Operating Point / Policy", 2.66, PP_ALIGN.LEFT),
-    ("Cora Pool\n(527 shared neg)", 1.36, PP_ALIGN.CENTER),
-    ("Citeseer Pool\n(455 shared neg)", 1.44, PP_ALIGN.CENTER),
-    ("Cora HeaRT\n(500 hard/query)", 1.40, PP_ALIGN.CENTER),
-    ("Citeseer HeaRT\n(500 hard/query)", 1.44, PP_ALIGN.CENTER),
-]
-
-table_rows = [
-    ("Chance level (random ranking)", "1.3", "1.5", "1.4", "1.4", False, C_WHITE),
-    ("Adamic–Adar (AA) alone  [0% GPU, <1 ms CPU]", "33.1  (31.9 avg)", "31.5  (29.4 avg)", "12.0  (11.9 avg)", "11.0  (10.8 avg)", False, C_WHITE),
-    ("★ Frugal Hybrid  [val-picked ≤ 10% GPU cap]", "38.4 ± 0.1  (7%)", "34.7 ± 2.6  (9%)", "12.8 ± 0.2  (0.4%)", "13.8 ± 0.5  (8%)", True, C_IVORY),
-    ("★ Cross-Graph Rule  [Cora → Citeseer, 25% cap]", "42.0 ± 3.9  (24%)", "44.9  (beats own 37.9)", "12.9 ± 0.1  (23%)", "13.8  (21% GPU)", True, C_WHITE),
-    ("★ Half-Fanout PENCIL  [s = 2×10, all candidates]", "42.9 ± 1.9  (67%)", "51.4 ± 0.7  (63%)", "14.3 ± 0.0  (65%)", "14.2 ± 0.0  (69%)", True, C_IVORY),
-    ("Official Full PENCIL  [s = 2×20, 100% GPU, 2.2 GB]", "43.7 ± 0.9  (100%)", "49.7 ± 0.2  (100%)", "13.3 ± 0.1  (100%)", "17.8 ± 0.1  (100%)", False, C_WHITE),
-]
-
-# Header band
-hdr_h = 0.36
-rect(RX, TY, RW, hdr_h, fill=C_NAVY)
-cx = RX
-for title, cw, al in cols:
-    tf = tbox(cx + 0.06, TY + 0.04, cw - 0.12, hdr_h - 0.06)
-    add_p(tf, [(title, 7.6, True, C_WHITE)], align=al, first=True, line_spacing=1.0)
-    cx += cw
-
-# Data rows
-row_h = 0.315
-for r_idx, (r0, r1, r2, r3, r4, is_hl, bg_col) in enumerate(table_rows):
-    ry = TY + hdr_h + r_idx * row_h
-    rect(RX, ry, RW, row_h, fill=bg_col)
-    rect(RX, ry + row_h - 0.01, RW, 0.01, fill=C_RULE)
-    if is_hl:
-        rect(RX, ry, 0.04, row_h, fill=C_CRIMSON)
-
-    vals = [r0, r1, r2, r3, r4]
-    cx = RX
-    for c_idx, ((_, cw, al), val) in enumerate(zip(cols, vals)):
-        tf = tbox(cx + 0.07, ry + 0.06, cw - 0.14, row_h - 0.08)
-        f_col = C_CRIMSON if (is_hl and c_idx > 0 and ("51.4" in val or "44.9" in val or "14.3" in val or "38.4" in val)) \
-            else (C_INK if (is_hl or c_idx == 0) else C_SLATE)
-        f_name = "Segoe UI" if c_idx == 0 else "Consolas"
-        f_sz = 7.6 if c_idx == 0 else 7.5
-        add_p(tf, [(val, f_sz, is_hl or (r_idx == 5 and c_idx == 4), f_col, f_name)],
-              align=al, first=True, line_spacing=1.0)
-        cx += cw
-
-# Bottom heavy rule of booktabs table
-table_bot = TY + hdr_h + len(table_rows) * row_h
-rect(RX, table_bot, RW, 0.022, fill=C_INK)
-
-# Footnote under table
-tf = tbox(RX, table_bot + 0.04, RW, 0.22)
-add_p(tf, [
-    ("Protocol note: ", 7.1, True, C_SLATE),
-    ("Parentheses in AA row show ties-averaged MRR (matching published HeaRT tables: 31.87, 29.37, 11.91, 10.82); degree tie-break lifts AA to 33.1 / 31.5. Peak VRAM under HeaRT drops from ", 7.1, False, C_MUTED),
-    ("2,219 MB (s=2×20) → 1,347 MB (s=2×10) → 558 MB (s=2×2)", 7.1, True, C_SLATE),
-    (".", 7.1, False, C_MUTED),
-], first=True)
-
-# --- Section VI: Bottom Crimson & Ivory Callout Banner (Road to Nov 26) ---
-BY, BH = 6.56, 0.68
-rect(RX, BY, 1.56, BH, fill=C_CRIMSON)
-tf = tbox(RX + 0.08, BY + 0.13, 1.40, BH - 0.20)
-add_p(tf, [("ROADMAP → NOV 26", 8.2, True, C_WHITE)], align=PP_ALIGN.CENTER, first=True, line_spacing=1.05)
-add_p(tf, [("Final Report · Video · Code", 7.0, False, C_IVORY)], align=PP_ALIGN.CENTER, space_before=2, line_spacing=1.0)
-
-rect(RX + 1.56, BY, RW - 1.56, BH, fill=C_IVORY, line=C_AMBER, line_pt=0.75)
-tf = tbox(RX + 1.68, BY + 0.07, RW - 1.76, BH - 0.12)
-add_p(tf, [
-    ("1. Training-axis compute law: ", 7.5, True, C_INK),
-    ("93% of final Cora Test MRR is reached by epoch 42 of 150 (28% of training budget), after which validation/test curves plateau.", 7.4, False, C_SLATE),
-], first=True, space_after=2, line_spacing=1.04)
-add_p(tf, [
-    ("2. Remaining deliverables: ", 7.5, True, C_INK),
-    ("Fit closed-form (k, s) selector on validation · latency + VRAM Pareto frontier · reproducible suite & 112 score dumps at ", 7.4, False, C_SLATE),
-    ("github.com/Ask-812/da4022-pencil-budget", 7.4, True, C_CRIMSON, "Consolas"),
-], line_spacing=1.04)
-
-out = os.path.join(HERE, "docs", "MIDREPORT_public.pptx") if os.environ.get("PENCIL_PUBLIC") \
-    else os.path.join(HERE, "MIDREPORT.pptx")
+out = os.path.join(HERE, "docs", "MIDREPORT_public.pptx") if PUBLIC else os.path.join(HERE, "MIDREPORT.pptx")
 prs.save(out)
-print("wrote", out)
+print(f"wrote {out}")

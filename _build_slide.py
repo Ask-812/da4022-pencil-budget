@@ -214,221 +214,295 @@ def rule(x, y, w, color=RULE, height=0.012):
 metrics = load_metrics()
 chart_path = make_comparison_figure(metrics)
 
-# Canvas and structural accents.
+# Canvas.
 shape(MSO_SHAPE.RECTANGLE, 0, 0, 13.333, 7.5, fill=PAPER)
 shape(MSO_SHAPE.RECTANGLE, 0, 0, 13.333, 0.075, fill=CRIMSON)
-shape(MSO_SHAPE.RECTANGLE, 0.27, 0.31, 0.055, 6.87, fill=CRIMSON)
+shape(MSO_SHAPE.RECTANGLE, 0.18, 0.20, 0.05, 7.04, fill=CRIMSON)
 
-# Header.
-tf = textbox(0.55, 0.25, 8.8, 0.24).text_frame
+# Header: report identity on the left, team on the right.
+tf = textbox(0.39, 0.19, 7.75, 0.18).text_frame
 paragraph(
     tf,
-    [run("DA4022  /  MID-PROJECT REPORT  /  15 OCT 2026", 8.5, True, CRIMSON, "Aptos")],
+    [run("DA4022 MID-PROJECT REPORT  ·  SELF-PROPOSED PENCIL EXTENSION  ·  15 OCT 2026", 7.8, True, CRIMSON)],
     first=True,
 )
-
-tf = textbox(0.55, 0.50, 8.35, 0.43).text_frame
+tf = textbox(0.39, 0.39, 7.65, 0.43).text_frame
+paragraph(tf, [run("How Much PENCIL Can You Afford?", 23.0, True, INK, "Georgia")], first=True)
+tf = textbox(0.39, 0.79, 7.65, 0.18).text_frame
 paragraph(
     tf,
-    [run("Full-budget PENCIL is", 28, True, INK, "Georgia")],
-    first=True,
-)
-tf = textbox(0.55, 1.00, 8.35, 0.43).text_frame
-paragraph(
-    tf,
-    [run("often unnecessary.", 28, True, CRIMSON, "Georgia")],
-    first=True,
-)
-
-tf = textbox(9.05, 0.27, 3.72, 0.95).text_frame
-paragraph(
-    tf,
-    [run("HOW MUCH PENCIL CAN YOU AFFORD?", 8.3, True, MUTED, "Aptos")],
-    first=True,
-    align=PP_ALIGN.RIGHT,
-)
-paragraph(
-    tf,
-    [run("Compute-allocation laws for link prediction", 12.2, True, NAVY, "Georgia")],
-    align=PP_ALIGN.RIGHT,
-    space_before=3,
-    line_spacing=1.02,
-)
-
-rule(0.55, 1.49, 12.23)
-
-# Hero statement.
-shape(MSO_SHAPE.ROUNDED_RECTANGLE, 0.55, 1.72, 12.23, 1.15, fill=NAVY, radius=True)
-tf = textbox(0.82, 1.83, 2.15, 0.86, valign=MSO_ANCHOR.MIDDLE).text_frame
-paragraph(
-    tf,
-    [run("65%", 42, True, WHITE, "Georgia")],
-    first=True,
-    align=PP_ALIGN.CENTER,
-)
-tf = textbox(2.97, 1.91, 0.95, 0.62, valign=MSO_ANCHOR.MIDDLE).text_frame
-paragraph(
-    tf,
-    [run("GPU\nbudget", 11.2, True, PALE_BLUE, "Aptos")],
-    first=True,
-    line_spacing=1.05,
-)
-shape(MSO_SHAPE.RECTANGLE, 4.05, 1.96, 0.015, 0.65, fill=RGBColor(0x5C, 0x6C, 0x83))
-tf = textbox(4.32, 1.86, 5.62, 0.72, valign=MSO_ANCHOR.MIDDLE).text_frame
-paragraph(
-    tf,
-    [run("matches or beats full PENCIL", 20, True, WHITE, "Georgia")],
-    first=True,
-)
-paragraph(
-    tf,
-    [run("in 3 of 4 test regimes — with ~40% less peak VRAM on Cora HeaRT.", 10.3, False, PALE_BLUE, "Aptos")],
-    space_before=3,
-)
-shape(MSO_SHAPE.ROUNDED_RECTANGLE, 10.34, 1.96, 2.15, 0.63, fill=RGBColor(0x2B, 0x4A, 0x70), radius=True)
-tf = textbox(10.47, 2.04, 1.89, 0.44, valign=MSO_ANCHOR.MIDDLE).text_frame
-paragraph(
-    tf,
-    [run("s = 2×10  vs  2×20", 10.2, True, WHITE, "Consolas")],
-    first=True,
-    align=PP_ALIGN.CENTER,
-)
-
-# Left column: question, method, progress.
-LX, LW = 0.55, 3.48
-tf = textbox(LX, 3.12, LW, 0.20).text_frame
-paragraph(tf, [run("THE QUESTION", 8.5, True, CRIMSON, "Aptos")], first=True)
-tf = textbox(LX, 3.36, LW, 0.72).text_frame
-paragraph(
-    tf,
-    [run("Can we spend PENCIL's GPU compute only where a cheap graph heuristic is uncertain?", 13.2, True, INK, "Georgia")],
-    first=True,
-    line_spacing=1.03,
-)
-
-tf = textbox(LX, 4.20, LW, 0.20).text_frame
-paragraph(tf, [run("OUR INFERENCE-ONLY METHOD", 8.5, True, CRIMSON, "Aptos")], first=True)
-
-steps = [
-    ("1", "Rank", "Adamic–Adar\non CPU", PALE_AMBER, AMBER),
-    ("2", "Shortlist", "top k candidate\npairs", PALE_ROSE, CRIMSON),
-    ("3", "Re-rank", "PENCIL with\nbudget s", PALE_BLUE, NAVY),
-]
-for i, (num, title, body, bg, accent) in enumerate(steps):
-    x = LX + i * 1.15
-    shape(MSO_SHAPE.ROUNDED_RECTANGLE, x, 4.48, 1.04, 0.94, fill=bg, line=RULE, radius=True)
-    shape(MSO_SHAPE.OVAL, x + 0.08, 4.58, 0.22, 0.22, fill=accent)
-    tf = textbox(x + 0.08, 4.575, 0.22, 0.20, valign=MSO_ANCHOR.MIDDLE).text_frame
-    paragraph(tf, [run(num, 7.2, True, WHITE, "Aptos")], first=True, align=PP_ALIGN.CENTER)
-    tf = textbox(x + 0.35, 4.55, 0.60, 0.22).text_frame
-    paragraph(tf, [run(title, 8.5, True, accent, "Aptos")], first=True)
-    tf = textbox(x + 0.08, 4.86, 0.88, 0.42).text_frame
-    paragraph(tf, [run(body, 7.5, False, SLATE, "Aptos")], first=True, align=PP_ALIGN.CENTER, line_spacing=0.95)
-    if i < 2:
-        tf = textbox(x + 1.04, 4.78, 0.11, 0.22).text_frame
-        paragraph(tf, [run("›", 16, True, MUTED, "Georgia")], first=True, align=PP_ALIGN.CENTER)
-
-tf = textbox(LX, 5.66, LW, 0.20).text_frame
-paragraph(tf, [run("MID-PROJECT STATUS", 8.5, True, CRIMSON, "Aptos")], first=True)
-status_lines = [
-    ("✓", "Reproduced PENCIL", "Cora 44.00 · Citeseer 50.46"),
-    ("✓", "112 evaluation runs", "2 graphs × 2 protocols × budgets"),
-    ("→", "Next: final decision rule", "latency/VRAM Pareto + final report"),
-]
-for i, (mark, title, detail) in enumerate(status_lines):
-    y = 5.93 + i * 0.37
-    color = TEAL if mark == "✓" else AMBER
-    tf = textbox(LX, y, 0.25, 0.22).text_frame
-    paragraph(tf, [run(mark, 10.5, True, color, "Aptos")], first=True)
-    tf = textbox(LX + 0.29, y, 3.15, 0.25).text_frame
-    paragraph(
-        tf,
-        [run(title, 8.5, True, INK, "Aptos"), run("  " + detail, 7.5, False, MUTED, "Aptos")],
-        first=True,
-    )
-
-# Right column: four result cards.
-RX, RW = 4.32, 8.46
-tf = textbox(RX, 3.12, RW, 0.20).text_frame
-paragraph(
-    tf,
-    [run("HALF-FANOUT RESULT  /  TEST MRR ×100", 8.5, True, CRIMSON, "Aptos")],
-    first=True,
-)
-
-card_gap = 0.12
-card_w = (RW - 3 * card_gap) / 4
-for i, item in enumerate(metrics):
-    x = RX + i * (card_w + card_gap)
-    delta = item["half"] - item["full"]
-    if delta > 0.25:
-        verdict, bg, accent = "BEATS FULL", PALE_TEAL, TEAL
-    elif delta > -1.0:
-        verdict, bg, accent = "MATCHES", PALE_BLUE, NAVY
-    else:
-        verdict, bg, accent = "NEEDS FULL", PALE_ROSE, CRIMSON
-
-    shape(MSO_SHAPE.ROUNDED_RECTANGLE, x, 3.40, card_w, 1.42, fill=WHITE, line=RULE, radius=True)
-    shape(MSO_SHAPE.RECTANGLE, x, 3.40, card_w, 0.055, fill=accent)
-    tf = textbox(x + 0.12, 3.54, card_w - 0.24, 0.24).text_frame
-    paragraph(
-        tf,
-        [run(item["label"].replace("\n", " · "), 8.7, True, SLATE, "Aptos")],
-        first=True,
-        align=PP_ALIGN.CENTER,
-    )
-    tf = textbox(x + 0.10, 3.83, card_w - 0.20, 0.42).text_frame
-    paragraph(
-        tf,
-        [run(f"{item['half']:.1f}", 22, True, accent, "Georgia")],
-        first=True,
-        align=PP_ALIGN.CENTER,
-    )
-    tf = textbox(x + 0.10, 4.23, card_w - 0.20, 0.20).text_frame
-    paragraph(
-        tf,
-        [run(f"full: {item['full']:.1f}", 7.6, False, MUTED, "Consolas")],
-        first=True,
-        align=PP_ALIGN.CENTER,
-    )
-    shape(MSO_SHAPE.ROUNDED_RECTANGLE, x + 0.32, 4.49, card_w - 0.64, 0.23, fill=bg, radius=True)
-    tf = textbox(x + 0.34, 4.515, card_w - 0.68, 0.17, valign=MSO_ANCHOR.MIDDLE).text_frame
-    paragraph(tf, [run(verdict, 7.0, True, accent, "Aptos")], first=True, align=PP_ALIGN.CENTER)
-
-# Evidence chart.
-tf = textbox(RX, 5.03, RW, 0.20).text_frame
-paragraph(
-    tf,
-    [run("THE FULL BUDGET IS NOT THE DEFAULT WINNER", 8.5, True, CRIMSON, "Aptos")],
-    first=True,
-)
-shape(MSO_SHAPE.ROUNDED_RECTANGLE, RX, 5.30, RW, 1.47, fill=WHITE, line=RULE, radius=True)
-slide.shapes.add_picture(chart_path, Inches(RX + 0.09), Inches(5.36), width=Inches(RW - 0.18), height=Inches(1.34))
-
-# Bottom takeaway and authors.
-rule(0.55, 7.04, 12.23)
-tf = textbox(0.55, 7.13, 8.3, 0.20).text_frame
-paragraph(
-    tf,
-    [
-        run("INTERIM LAW: ", 8.2, True, CRIMSON, "Aptos"),
-        run("reduce neighborhood fanout first; reserve full context for the hard regime.", 8.2, True, INK, "Aptos"),
-    ],
+    [run("Compute-allocation laws for link prediction  ·  choosing shortlist k and context budget s without retraining", 8.8, True, SLATE)],
     first=True,
 )
 
 team_parts = []
 for name in NAMES:
-    text = name
+    member = name
     if not PUBLIC:
-        text += f" ({ROLLS[name]})"
-    team_parts.append(text)
-tf = textbox(8.60, 7.10, 4.18, 0.24).text_frame
+        member += f"  {ROLLS[name]}"
+    team_parts.append(member)
+tf = textbox(8.05, 0.23, 4.89, 0.60).text_frame
+paragraph(tf, [run("TEAM", 7.4, True, CRIMSON)], first=True, align=PP_ALIGN.RIGHT)
 paragraph(
     tf,
-    [run(" · ".join(team_parts), 6.4, False, MUTED, "Aptos")],
-    first=True,
+    [run("  ·  ".join(team_parts), 6.6, False, MUTED, "Aptos")],
     align=PP_ALIGN.RIGHT,
+    space_before=2,
+    line_spacing=1.05,
+)
+rule(0.39, 1.02, 12.55)
+
+# Three-column editorial grid.
+LX, LW = 0.39, 3.00
+MX, MW = 3.55, 4.31
+RX, RW = 8.02, 4.92
+shape(MSO_SHAPE.RECTANGLE, 3.46, 1.20, 0.012, 5.91, fill=RULE)
+shape(MSO_SHAPE.RECTANGLE, 7.93, 1.20, 0.012, 5.91, fill=RULE)
+
+# -----------------------------------------------------------------------------
+# COLUMN 1 — METHOD, REPRODUCTION, AUDIT, ROADMAP
+# -----------------------------------------------------------------------------
+tf = textbox(LX, 1.15, LW, 0.18).text_frame
+paragraph(tf, [run("01  METHOD + REPRODUCTION", 8.2, True, CRIMSON)], first=True)
+
+shape(MSO_SHAPE.ROUNDED_RECTANGLE, LX, 1.40, LW, 1.31, fill=WHITE, line=RULE, radius=True)
+shape(MSO_SHAPE.RECTANGLE, LX, 1.40, 0.045, 1.31, fill=NAVY)
+tf = textbox(LX + 0.13, 1.50, LW - 0.24, 0.40).text_frame
+paragraph(
+    tf,
+    [run("Research question", 7.5, True, CRIMSON), run("  Can a cheap graph heuristic decide where expensive PENCIL inference is worth paying for?", 8.2, True, INK, "Georgia")],
+    first=True,
+    line_spacing=1.02,
+)
+
+steps = [
+    ("1", "AA rank", "CPU <1 ms", PALE_AMBER, AMBER),
+    ("2", "top-k", "shortlist 0–100%", PALE_ROSE, CRIMSON),
+    ("3", "PENCIL", "re-rank with s", PALE_BLUE, NAVY),
+]
+for i, (num, title, body, bg, accent) in enumerate(steps):
+    x = LX + 0.12 + i * 0.94
+    shape(MSO_SHAPE.ROUNDED_RECTANGLE, x, 2.01, 0.82, 0.55, fill=bg, line=RULE, radius=True)
+    tf = textbox(x + 0.05, 2.07, 0.72, 0.16).text_frame
+    paragraph(tf, [run(f"{num}  {title}", 7.3, True, accent)], first=True, align=PP_ALIGN.CENTER)
+    tf = textbox(x + 0.03, 2.31, 0.76, 0.15).text_frame
+    paragraph(tf, [run(body, 5.9, False, SLATE)], first=True, align=PP_ALIGN.CENTER)
+    if i < 2:
+        tf = textbox(x + 0.82, 2.17, 0.12, 0.18).text_frame
+        paragraph(tf, [run("→", 8.5, True, MUTED)], first=True, align=PP_ALIGN.CENTER)
+
+tf = textbox(LX, 2.86, LW, 0.18).text_frame
+paragraph(tf, [run("FREE-GPU REPRODUCTION  ·  PAPER USED 4–8× A100", 7.7, True, CRIMSON)], first=True)
+kpis = [
+    ("44.00", "Cora test", "paper 42.23", NAVY),
+    ("50.46", "Citeseer test", "paper 47.51", TEAL),
+    ("112", "score dumps", "4 regimes", CRIMSON),
+]
+for i, (value, title, sub, accent) in enumerate(kpis):
+    x = LX + i * 1.01
+    shape(MSO_SHAPE.ROUNDED_RECTANGLE, x, 3.10, 0.92, 0.82, fill=WHITE, line=RULE, radius=True)
+    shape(MSO_SHAPE.RECTANGLE, x, 3.10, 0.92, 0.04, fill=accent)
+    tf = textbox(x + 0.06, 3.22, 0.80, 0.25).text_frame
+    paragraph(tf, [run(value, 14.5, True, accent, "Georgia")], first=True, align=PP_ALIGN.CENTER)
+    tf = textbox(x + 0.04, 3.49, 0.84, 0.14).text_frame
+    paragraph(tf, [run(title, 6.8, True, INK)], first=True, align=PP_ALIGN.CENTER)
+    tf = textbox(x + 0.04, 3.68, 0.84, 0.13).text_frame
+    paragraph(tf, [run(sub, 6.2, False, MUTED, "Consolas")], first=True, align=PP_ALIGN.CENTER)
+
+tf = textbox(LX, 4.10, LW, 0.18).text_frame
+paragraph(tf, [run("EXPERIMENTAL AUDIT", 8.2, True, CRIMSON)], first=True)
+shape(MSO_SHAPE.ROUNDED_RECTANGLE, LX, 4.34, LW, 1.30, fill=WHITE, line=RULE, radius=True)
+audit_rows = [
+    ("4 regimes", "Cora + Citeseer × shared-pool + HeaRT hard negatives"),
+    ("Validation only", "select (k, s) under 5%, 10%, 25%, 50%, 75%, 100% caps"),
+    ("Bias checks", "fixed float32 score collapse and shortlist tie-position bias"),
+]
+for i, (head, body) in enumerate(audit_rows):
+    y = 4.46 + i * 0.38
+    if i:
+        rule(LX + 0.12, y - 0.07, LW - 0.24, color=RULE, height=0.008)
+    tf = textbox(LX + 0.13, y, 0.82, 0.18).text_frame
+    paragraph(tf, [run(head, 7.0, True, NAVY)], first=True)
+    tf = textbox(LX + 0.92, y, 1.94, 0.27).text_frame
+    paragraph(tf, [run(body, 6.45, False, SLATE)], first=True, line_spacing=1.0)
+
+tf = textbox(LX, 5.83, LW, 0.18).text_frame
+paragraph(tf, [run("ROAD TO FINAL SUBMISSION  ·  26 NOV", 8.2, True, CRIMSON)], first=True)
+shape(MSO_SHAPE.ROUNDED_RECTANGLE, LX, 6.07, LW, 0.93, fill=PALE_AMBER, line=RGBColor(0xDC, 0xBE, 0x99), radius=True)
+tf = textbox(LX + 0.13, 6.18, LW - 0.26, 0.70).text_frame
+paragraph(
+    tf,
+    [run("1  Training law", 7.2, True, AMBER), run("  93% of final Cora MRR is reached by epoch 42/150.", 6.8, False, SLATE)],
+    first=True,
+    line_spacing=1.02,
+    space_after=3,
+)
+paragraph(
+    tf,
+    [run("2  Deliverables", 7.2, True, AMBER), run("  closed-form selector · latency/VRAM Pareto · final report · PPT video · reproducible code.", 6.8, False, SLATE)],
+    line_spacing=1.02,
+)
+
+# -----------------------------------------------------------------------------
+# COLUMN 2 — FOUR DETAILED EMPIRICAL FINDINGS
+# -----------------------------------------------------------------------------
+tf = textbox(MX, 1.15, MW, 0.18).text_frame
+paragraph(tf, [run("02  FOUR EMPIRICAL COMPUTE-ALLOCATION LAWS", 8.2, True, CRIMSON)], first=True)
+
+findings = [
+    (
+        "01",
+        "Half fanout is enough in 3 of 4 regimes",
+        "At s=2×10 (~65% GPU), PENCIL matches Cora Pool (42.9 vs 43.7) and beats full s=2×20 on Citeseer Pool (51.4 vs 49.7) and Cora HeaRT (14.3 vs 13.3). Citeseer HeaRT is the exception: 14.2 vs 17.8.",
+        NAVY,
+        PALE_BLUE,
+    ),
+    (
+        "02",
+        "A ≤10% GPU hybrid beats heuristics everywhere",
+        "Validation-selected (k, s) improves over Adamic–Adar in all four tests: 33.1→38.4 on Cora Pool, 31.5→34.7 on Citeseer Pool, 12.0→12.8 on Cora HeaRT, and 11.0→13.8 on Citeseer HeaRT.",
+        TEAL,
+        PALE_TEAL,
+    ),
+    (
+        "03",
+        "PENCIL pays off where graph structure is blind",
+        "Re-ranking only the top 10% changes almost nothing because AA already ranks easy links highly. The useful compute lies in the zero-common-neighbour tail: 57.3% of true Cora test links have zero shared neighbours.",
+        AMBER,
+        PALE_AMBER,
+    ),
+    (
+        "04",
+        "Cross-graph rules can beat noisy local selection",
+        "Applying Cora's validation-chosen rule unchanged to Citeseer beats Citeseer's own validation pick at every cap ≤50%; at the 25% cap, transferred MRR is 44.9 versus 37.9 from local selection.",
+        CRIMSON,
+        PALE_ROSE,
+    ),
+]
+
+card_y = [1.40, 2.68, 3.96, 5.24]
+for (num, title, body, accent, tint), y in zip(findings, card_y):
+    shape(MSO_SHAPE.ROUNDED_RECTANGLE, MX, y, MW, 1.12, fill=WHITE, line=RULE, radius=True)
+    shape(MSO_SHAPE.RECTANGLE, MX, y, 0.045, 1.12, fill=accent)
+    shape(MSO_SHAPE.OVAL, MX + 0.15, y + 0.18, 0.42, 0.42, fill=tint, line=accent, line_width=0.8)
+    tf = textbox(MX + 0.15, y + 0.25, 0.42, 0.18, valign=MSO_ANCHOR.MIDDLE).text_frame
+    paragraph(tf, [run(num, 8.0, True, accent, "Georgia")], first=True, align=PP_ALIGN.CENTER)
+    tf = textbox(MX + 0.69, y + 0.13, MW - 0.84, 0.25).text_frame
+    paragraph(tf, [run(title, 9.2, True, INK, "Georgia")], first=True)
+    tf = textbox(MX + 0.69, y + 0.43, MW - 0.84, 0.57).text_frame
+    paragraph(tf, [run(body, 7.05, False, SLATE)], first=True, line_spacing=1.04)
+
+shape(MSO_SHAPE.ROUNDED_RECTANGLE, MX, 6.55, MW, 0.45, fill=NAVY, radius=True)
+tf = textbox(MX + 0.16, 6.65, MW - 0.32, 0.23, valign=MSO_ANCHOR.MIDDLE).text_frame
+paragraph(
+    tf,
+    [run("INTERIM LAW  ", 7.4, True, PALE_BLUE), run("reduce fanout first; reserve full context for the hard regime.", 7.6, True, WHITE)],
+    first=True,
+    align=PP_ALIGN.CENTER,
+)
+
+# -----------------------------------------------------------------------------
+# COLUMN 3 — FIGURES, BENCHMARK MATRIX, TRANSFER + RESOURCE EVIDENCE
+# -----------------------------------------------------------------------------
+tf = textbox(RX, 1.15, RW, 0.18).text_frame
+paragraph(tf, [run("03  EVIDENCE ACROSS FOUR TEST REGIMES", 8.2, True, CRIMSON)], first=True)
+
+shape(MSO_SHAPE.ROUNDED_RECTANGLE, RX, 1.40, RW, 1.92, fill=WHITE, line=RULE, radius=True)
+slide.shapes.add_picture(
+    os.path.join(RESULTS, "fig_mid.png"),
+    Inches(RX + 0.08),
+    Inches(1.50),
+    width=Inches(RW - 0.16),
+    height=Inches(1.44),
+)
+tf = textbox(RX + 0.15, 3.00, RW - 0.30, 0.19).text_frame
+paragraph(
+    tf,
+    [run("Shortlist saturation  ·  compute Pareto frontiers  ·  HeaRT hard-negative stress test", 6.5, False, MUTED)],
+    first=True,
+    align=PP_ALIGN.CENTER,
+)
+
+tf = textbox(RX, 3.49, RW, 0.18).text_frame
+paragraph(tf, [run("VALIDATION-SELECTED OPERATING POINTS  ·  TEST MRR ×100", 8.2, True, CRIMSON)], first=True)
+
+table_x, table_y = RX, 3.74
+col_widths = [1.34, 0.88, 0.88, 0.90, 0.92]
+headers = ["Policy", "Cora\nPool", "Citeseer\nPool", "Cora\nHeaRT", "Citeseer\nHeaRT"]
+rows = [
+    ("Chance", "1.3", "1.5", "1.4", "1.4"),
+    ("AA · 0% GPU", "33.1", "31.5", "12.0", "11.0"),
+    ("Hybrid · ≤10%", "38.4 · 7%", "34.7 · 9%", "12.8 · 0.4%", "13.8 · 8%"),
+    ("Half · s=2×10", "42.9 · 67%", "51.4 · 63%", "14.3 · 65%", "14.2 · 69%"),
+    ("Full · s=2×20", "43.7", "49.7", "13.3", "17.8"),
+]
+header_h, row_h = 0.40, 0.315
+shape(MSO_SHAPE.RECTANGLE, table_x, table_y, RW, header_h, fill=NAVY)
+cx = table_x
+for i, (head, width) in enumerate(zip(headers, col_widths)):
+    tf = textbox(cx + 0.04, table_y + 0.07, width - 0.08, 0.27).text_frame
+    paragraph(
+        tf,
+        [run(head, 6.7, True, WHITE)],
+        first=True,
+        align=PP_ALIGN.LEFT if i == 0 else PP_ALIGN.CENTER,
+        line_spacing=0.95,
+    )
+    cx += width
+
+for r_idx, values in enumerate(rows):
+    y = table_y + header_h + r_idx * row_h
+    bg = PALE_AMBER if r_idx == 2 else (PALE_TEAL if r_idx == 3 else WHITE)
+    shape(MSO_SHAPE.RECTANGLE, table_x, y, RW, row_h, fill=bg)
+    rule(table_x, y + row_h - 0.008, RW, color=RULE, height=0.008)
+    cx = table_x
+    for c_idx, (value, width) in enumerate(zip(values, col_widths)):
+        color = INK
+        bold = c_idx == 0 or r_idx in (2, 3)
+        if r_idx == 3 and c_idx in (2, 3):
+            color = TEAL
+        if r_idx == 2 and c_idx in (1, 4):
+            color = AMBER
+        tf = textbox(cx + 0.05, y + 0.075, width - 0.10, 0.16, valign=MSO_ANCHOR.MIDDLE).text_frame
+        paragraph(
+            tf,
+            [run(value, 6.6, bold, color, "Aptos" if c_idx == 0 else "Consolas")],
+            first=True,
+            align=PP_ALIGN.LEFT if c_idx == 0 else PP_ALIGN.CENTER,
+        )
+        cx += width
+
+table_bottom = table_y + header_h + len(rows) * row_h
+shape(MSO_SHAPE.RECTANGLE, table_x, table_bottom, RW, 0.018, fill=INK)
+
+tf = textbox(RX, 5.87, RW, 0.18).text_frame
+paragraph(tf, [run("TRANSFER + RESOURCE EVIDENCE", 8.2, True, CRIMSON)], first=True)
+shape(MSO_SHAPE.ROUNDED_RECTANGLE, RX, 6.10, RW, 0.90, fill=WHITE, line=RULE, radius=True)
+shape(MSO_SHAPE.RECTANGLE, RX, 6.10, 0.045, 0.90, fill=TEAL)
+tf = textbox(RX + 0.15, 6.20, 2.30, 0.66).text_frame
+paragraph(
+    tf,
+    [run("Cora → Citeseer", 7.3, True, TEAL), run("  At the 25% cap, the transferred rule reaches 44.9 MRR, beating Citeseer's own noisy validation pick (37.9).", 6.7, False, SLATE)],
+    first=True,
+    line_spacing=1.03,
+)
+shape(MSO_SHAPE.RECTANGLE, RX + 2.53, 6.22, 0.010, 0.55, fill=RULE)
+tf = textbox(RX + 2.69, 6.20, 2.04, 0.66).text_frame
+paragraph(
+    tf,
+    [run("Peak VRAM · Cora HeaRT", 7.3, True, NAVY), run("  2,219 MB (2×20) → 1,347 MB (2×10) → 558 MB (2×2).", 6.7, False, SLATE)],
+    first=True,
+    line_spacing=1.03,
+)
+
+# Footer.
+rule(0.39, 7.18, 12.55)
+tf = textbox(0.39, 7.25, 12.55, 0.14).text_frame
+paragraph(
+    tf,
+    [run("Reproducible code + 112 score dumps: github.com/Ask-812/da4022-pencil-budget", 6.4, True, MUTED, "Consolas")],
+    first=True,
+    align=PP_ALIGN.CENTER,
 )
 
 out = os.path.join(HERE, "docs", "MIDREPORT_public.pptx") if PUBLIC else os.path.join(HERE, "MIDREPORT.pptx")
